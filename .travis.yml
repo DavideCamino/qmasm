@@ -14,13 +14,13 @@ install:
 
 script:
   - cd examples
-  - test "$(qmasm --format=qmasm --solver=neal feature-test.qmasm | md5sum | awk '{print $1}')" = 08399934cd8092743d5a69f4ec637701
-  - test "$(qmasm --solver=tabu 1of5.qmasm | md5sum | awk '{print $1}')" = 38d9318cd4f4d34d1aafadcfca145362
-  - qmasm -O2 -v -v --solver=greedy 1of5.qmasm 2>&1 | md5sum | awk '{print $1}'
-  - test "$(qmasm -O2 -v -v --solver=greedy 1of5.qmasm 2>&1 | md5sum | awk '{print $1}')" = f7dbc2ea0ae1a41e92436cbcf676e2ae
-  - test "$(qmasm --solver=neal --format=ocean --pin="x10 := true" circsat.qmasm | md5sum | awk '{print $1}')" = ac41b2e24401324f610ae0d7a74eb424
-  - test "$(qmasm --solver=exact --run 1of5.qmasm | md5sum | awk '{print $1}')" = 5296b7ddbf24c9a2f7785acb782ea2c8
-  - test "$(qmasm --solver=exact --run -v 1of5.qmasm 2>&1 | wc -l)" -eq 117
+  - function run_and_check () { expected="$1"; shift; actual=$("$@" | md5sum | cut -d' ' -f1); if [ "$expected" = "$actual" ] ; then true; else echo "Expected $expected but saw $actual" 1>&2; false; fi; }
+  - run_and_check 08399934cd8092743d5a69f4ec637701 qmasm --format=qmasm --solver=neal feature-test.qmasm
+  - run_and_check 38d9318cd4f4d34d1aafadcfca145362 qmasm --solver=tabu 1of5.qmasm
+  - run_and_check 38d9318cd4f4d34d1aafadcfca145362 qmasm -O2 -v -v --solver=greedy 1of5.qmasm
+  - run_and_check ac41b2e24401324f610ae0d7a74eb424 qmasm --solver=neal --format=ocean --pin="x10 := true" circsat.qmasm
+  - run_and_check 5296b7ddbf24c9a2f7785acb782ea2c8 qmasm --solver=exact --run 1of5.qmasm
+  - test "$(qmasm --solver=exact --run -v 1of5.qmasm 2>&1 | wc -l)" -eq 122
   - qmasm --solver=exact --run -v -v and4.qmasm 2>&1 | grep -q '16 excluding duplicate variable assignments'
   - test "$(qmasm --samples=1234 -v --solver=neal --run --pin="x10 := true" circsat.qmasm | awk '$2 == "True" && $1 ~ /^x(1|2|10)$/ {good++; next} $2 == "False" && $1 == "x3" {good++; next} $2 ~ /^(True|False)$/ {bad++} END {print good+0, bad+0}')" = "4 0"
   - test "$(qmasm --solver=tabu --run -v -v --pin="x10 := true" circsat.qmasm | grep -c PASS:)" -eq 22
