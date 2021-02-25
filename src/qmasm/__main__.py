@@ -139,7 +139,7 @@ class QMASM(ParseCommandLine, Utilities, OutputMixin):
 
         # Output some problem statistics.
         if cl_args.verbose > 0:
-            physical.output_embedding_statistics()
+            physical.output_embedding_statistics(all_num2syms)
 
         # Produce post-embedding output files.
         if write_output_file and write_time == "post":

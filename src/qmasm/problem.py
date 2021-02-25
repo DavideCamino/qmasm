@@ -366,7 +366,7 @@ class Problem(object):
         else:
             self._output_embedding_tersely(max_sym_name_len, num2syms)
 
-    def output_embedding_statistics(self):
+    def output_embedding_statistics(self, num2syms):
         "Output various statistics about the embedding."
         # Tally the original set of variables.
         logical = self.logical
@@ -375,20 +375,39 @@ class Problem(object):
             all_vars.add(q1)
             all_vars.add(q2)
 
+        # Tally the reduced set of variables.
+        bqm = logical.bqm
+        final_all_vars = set(bqm.linear.keys())
+        for q1, q2 in bqm.quadratic.keys():
+            final_all_vars.add(q1)
+            final_all_vars.add(q2)
+
+        # Determine how the original set of variables was reduced.
+        log2phys_desc = self._describe_logical_to_physical(num2syms, False)
+        same_as = len([d for d in log2phys_desc if d[0] == 'same_as'])
+        pinned = [d for d in log2phys_desc if d[0] == 'pinned']
+        pinned_true = len([p for p in pinned if p[1] == True])
+        pinned_false = len([p for p in pinned if p[1] == False])
+
         # Output statistics.
         known_true = sum([v == 1 for v in logical.known_values.values()])
         known_false = len(logical.known_values) - known_true
         sys.stderr.write("Computed the following statistics of the logical-to-physical mapping:\n\n")
-        sys.stderr.write("    Type      Metric           Value\n")
-        sys.stderr.write("    --------  ---------------  -----\n")
-        sys.stderr.write("    Logical   Variables        %5d\n" % len(all_vars))
-        sys.stderr.write("    Logical     Provably true  %5d\n" % known_true)
-        sys.stderr.write("    Logical     Provably false %5d\n" % known_false)
-        sys.stderr.write("    Logical   Strengths        %5d\n" % len(logical.strengths))
-        sys.stderr.write("    Logical     Equalities     %5d\n" % len(logical.chains))
-        sys.stderr.write("    Logical     Inequalities   %5d\n" % len(logical.antichains))
-        sys.stderr.write("    Physical  Spins            %5d\n" % len(self.weights))
-        sys.stderr.write("    Physical  Couplers         %5d\n" % len(self.strengths))
+        sys.stderr.write("    Type      Metric              Value\n")
+        sys.stderr.write("    --------  ------------------  -----\n")
+        sys.stderr.write("    Logical   Original variables  %5d\n" % len(all_vars))
+        sys.stderr.write("    Logical     Provably true     %5d\n" % known_true)
+        sys.stderr.write("    Logical     Provably false    %5d\n" % known_false)
+        sys.stderr.write("    Logical     Pinned to true    %5d\n" % pinned_true)
+        sys.stderr.write("    Logical     Pinned to false   %5d\n" % pinned_false)
+        sys.stderr.write("    Logical     Aliased           %5d\n" % same_as)
+        sys.stderr.write("    Logical   Original Strengths  %5d\n" % len(logical.strengths))
+        sys.stderr.write("    Logical     Equalities        %5d\n" % len(logical.chains))
+        sys.stderr.write("    Logical     Inequalities      %5d\n" % len(logical.antichains))
+        sys.stderr.write("    Logical   Final variables     %5d\n" % len(final_all_vars))
+        sys.stderr.write("    Logical   Final strengths     %5d\n" % len(bqm.quadratic))
+        sys.stderr.write("    Physical  Spins               %5d\n" % len(self.weights))
+        sys.stderr.write("    Physical  Couplers            %5d\n" % len(self.strengths))
         sys.stderr.write("\n")
 
         # Output some additional chain statistics.
