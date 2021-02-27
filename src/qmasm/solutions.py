@@ -28,10 +28,32 @@ class Solution:
         self.id = 0                   # Map from spins to an int
         self._checked_asserts = None  # Memoized result of check_assertions
 
-        # Compute an ID for the solution.
-        for s, c in sorted(self.sym2col.items()):
-            if "$" in s and not all_vars:
-                continue
+        # Determine which columns we care about.
+        num2syms = self.problem.num2syms
+        log2phys_desc = self.problem._describe_logical_to_physical(False)
+        if all_vars:
+            good_cols = set(self.sym2col.values())
+        else:
+            good_cols = set()
+            for n, ss in enumerate(num2syms):
+                for s in ss:
+                    if '$' not in s:
+                        good_cols.add(n)
+        changed = True
+        while changed:
+            changed = False
+            new_gc = set()
+            for c in good_cols:
+                t = log2phys_desc[c][0]
+                if t == 'same_as':
+                    new_gc.add(log2phys_desc[c][1])
+                    changed = True
+                elif t == 'physical':
+                    new_gc.add(c)
+            good_cols = new_gc
+
+        # Compute an ID for the solution as a function of the "good" columns.
+        for c in good_cols:
             self.id = self.id*2 + int((self.fixed_soln[c] + 1)//2)
 
         # Ensure every symbol has an associated value.
