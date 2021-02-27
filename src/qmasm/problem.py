@@ -28,6 +28,7 @@ class Problem(object):
         self.known_values = {}    # Map from a spin to -1 or +1
         self.bqm_vars = None      # Set of all variables appearing in the BQM
         self.contractions = {}    # Map from a spin to another spin it must be equal to
+        self.num2syms = []        # Map from a logical variable number to all associated symbols
 
     def assign_chain_strength(self, ch_str):
         """Define a strength for each user-specified and automatically
@@ -225,15 +226,15 @@ class Problem(object):
             remaining = still_remaining
         return merged
 
-    def dangling_variables(self, num2syms):
+    def dangling_variables(self):
         "Return a set of variables that are neither embedded nor have a known value."
         dangling = set()
         known_values = self.logical.merged_known_values()
-        for i in range(len(num2syms)):
-            if num2syms[i] == []:
+        for i in range(len(self.num2syms)):
+            if self.num2syms[i] == []:
                 continue
             if i not in self.embedding and i not in known_values and i not in self.contractions:
-                dangling.update(num2syms[i])
+                dangling.update(self.num2syms[i])
         return dangling
 
     def autoscale_coefficients(self, sampler):
@@ -253,15 +254,15 @@ class Problem(object):
         except KeyError:
             pass  # Probably a software solver.
 
-    def _describe_logical_to_physical(self, num2syms, reduce_contractions):
+    def _describe_logical_to_physical(self, reduce_contractions):
         "Map each logical qubit to zero or more physical qubits."
         # On the first pass, assign a descriptive tuple to each logical qubit
         # number.
         log2phys = []   # Map from a logical qubit to a descriptive tuple
         known_values = self.logical.merged_known_values()
         pin_map = {k: v for k, v in self.logical.pinned}
-        for i in range(len(num2syms)):
-            if num2syms[i] == []:
+        for i in range(len(self.num2syms)):
+            if self.num2syms[i] == []:
                 log2phys.append(("unused",))
                 continue
             try:
@@ -289,12 +290,12 @@ class Problem(object):
                     log2phys[i] = log2phys[log2phys[i][1]]
         return log2phys
 
-    def _output_embedding_verbosely(self, max_sym_name_len, num2syms, verbosity):
+    def _output_embedding_verbosely(self, max_sym_name_len, verbosity):
         "Verbosely output the mapping from logical to physical qubits."
         sys.stderr.write("Established a mapping from logical to physical qubits:\n\n")
         sys.stderr.write("    Logical  %-*s  Physical\n" % (max_sym_name_len, "Name(s)"))
         sys.stderr.write("    -------  %s  -------------------------\n" % ("-" * max_sym_name_len))
-        log2phys_desc = self._describe_logical_to_physical(num2syms, verbosity < 2)
+        log2phys_desc = self._describe_logical_to_physical(verbosity < 2)
         for i in range(len(log2phys_desc)):
             # Ignore unused logical qubits and "uninteresting" symbols (i.e.,
             # those containing a "$").
@@ -302,7 +303,7 @@ class Problem(object):
             tag = desc[0]
             if tag == "unused":
                 continue
-            syms = num2syms[i]
+            syms = self.num2syms[i]
             if verbosity < 2:
                 syms = [s for s in syms if "$" not in s]
             if len(syms) == 0:
@@ -325,10 +326,10 @@ class Problem(object):
             sys.stderr.write("    %7d  %-*s  %s\n" % (i, max_sym_name_len, name_list, phys_str))
         sys.stderr.write("\n")
 
-    def _output_embedding_tersely(self, max_sym_name_len, num2syms):
+    def _output_embedding_tersely(self, max_sym_name_len):
         "Tersely output the mapping from logical to physical qubits."
         log2phys_comments = []
-        log2phys_desc = self._describe_logical_to_physical(num2syms, True)
+        log2phys_desc = self._describe_logical_to_physical(True)
         for i in range(len(log2phys_desc)):
             # Ignore unused logical qubits and "uninteresting" symbols (i.e.,
             # those containing a "$").
@@ -336,7 +337,7 @@ class Problem(object):
             tag = desc[0]
             if tag == "unused":
                 continue
-            syms = [s for s in num2syms[i] if "$" not in s]
+            syms = [s for s in self.num2syms[i] if "$" not in s]
             if len(syms) == 0:
                 continue
             name_list = " ".join(sorted(syms))
@@ -359,14 +360,14 @@ class Problem(object):
         log2phys_comments.sort()
         sys.stderr.write("\n".join(log2phys_comments) + "\n")
 
-    def output_embedding(self, verbosity, max_sym_name_len, num2syms):
+    def output_embedding(self, verbosity, max_sym_name_len):
         "Output the mapping from logical to physical qubits."
         if verbosity > 0:
-            self._output_embedding_verbosely(max_sym_name_len, num2syms, verbosity)
+            self._output_embedding_verbosely(max_sym_name_len, verbosity)
         else:
-            self._output_embedding_tersely(max_sym_name_len, num2syms)
+            self._output_embedding_tersely(max_sym_name_len)
 
-    def output_embedding_statistics(self, num2syms):
+    def output_embedding_statistics(self):
         "Output various statistics about the embedding."
         # Tally the original set of variables.
         logical = self.logical
@@ -383,7 +384,7 @@ class Problem(object):
             final_all_vars.add(q2)
 
         # Determine how the original set of variables was reduced.
-        log2phys_desc = self._describe_logical_to_physical(num2syms, False)
+        log2phys_desc = self._describe_logical_to_physical(False)
         same_as = len([d for d in log2phys_desc if d[0] == 'same_as'])
         pinned = [d for d in log2phys_desc if d[0] == 'pinned']
         pinned_true = len([p for p in pinned if p[1] == True])

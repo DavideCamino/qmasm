@@ -127,19 +127,20 @@ class QMASM(ParseCommandLine, Utilities, OutputMixin):
             if cl_args.verbose >= 2 or "$" not in s:
                 num2syms[n].append(s)
                 max_sym_name_len = max(max_sym_name_len, len(repr(num2syms[n])) - 1)
+        physical.num2syms = all_num2syms
 
         # Output the embedding.
-        physical.output_embedding(cl_args.verbose, max_sym_name_len, all_num2syms)
+        physical.output_embedding(cl_args.verbose, max_sym_name_len)
 
         # Abort if any variables failed to embed.
         if physical.embedding != {}:
-            danglies = physical.dangling_variables(num2syms)
+            danglies = physical.dangling_variables()
             if len(danglies) > 0:
                 self.abend("Disconnected variables encountered: %s" % str(sorted(danglies)))
 
         # Output some problem statistics.
         if cl_args.verbose > 0:
-            physical.output_embedding_statistics(all_num2syms)
+            physical.output_embedding_statistics()
 
         # Produce post-embedding output files.
         if write_output_file and write_time == "post":
