@@ -8,6 +8,7 @@ import math
 import numpy as np
 import re
 import sys
+from collections import defaultdict
 from dwave import inspector
 from dwave.embedding import unembed_sampleset, chain_breaks, chain_break_frequency
 from scipy.stats import median_absolute_deviation
@@ -35,22 +36,12 @@ class Solution:
             good_cols = set(self.sym2col.values())
         else:
             good_cols = set()
-            for n, ss in enumerate(num2syms):
-                for s in ss:
-                    if '$' not in s:
-                        good_cols.add(n)
-        changed = True
-        while changed:
-            changed = False
-            new_gc = set()
-            for c in good_cols:
-                t = log2phys_desc[c][0]
-                if t == 'same_as':
-                    new_gc.add(log2phys_desc[c][1])
-                    changed = True
-                elif t == 'physical':
-                    new_gc.add(c)
-            good_cols = new_gc
+            same_syms = self._same_symbols()
+            for s, c in self.sym2col.items():
+                for other_s in same_syms[s]:
+                    if '$' not in other_s:
+                        good_cols.add(c)
+                        break
 
         # Compute an ID for the solution as a function of the "good" columns.
         for c in good_cols:
@@ -58,6 +49,35 @@ class Solution:
 
         # Ensure every symbol has an associated value.
         self.sym2bool = self._all_symbol_values()
+
+    def _same_symbols(self):
+        "Map every symbol to a set of equivalent symbols."
+        # Map each variable number to a set of symbols.
+        all_num2syms = defaultdict(lambda: set())
+        for n, syms in enumerate(self.problem.num2syms):
+            all_num2syms[n].update(syms)
+
+        # Repeatedly merge sets where variables are equivalent.
+        log2phys_desc = self.problem._describe_logical_to_physical(False)
+        same_as = {n: info[1] for n, info in enumerate(log2phys_desc) if info[0] == 'same_as'}
+        changed = True
+        while changed:
+            changed = False
+            for n1, n2 in same_as.items():
+                s1 = all_num2syms[n1]
+                s2 = all_num2syms[n2]
+                ss = s1 | s2
+                if len(s1) != len(ss) or len(s2) != len(ss):
+                    all_num2syms[n1] = ss
+                    all_num2syms[n2] = ss
+                    changed = True
+
+        # Map each symbol to all equivalent symbols (including self).
+        equiv_syms = {}
+        for syms in all_num2syms.values():
+            for s in syms:
+                equiv_syms[s] = syms
+        return equiv_syms
 
     def _all_symbol_values(self):
         """Return a mapping from every symbol to a value, including symbols
