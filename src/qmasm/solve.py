@@ -102,7 +102,7 @@ class Sampler(object):
             info["solver_name"] = solver
         if solver == "exact":
             return ExactSolver(), info, {}
-        elif solver == "neal":
+        elif solver == "sim_anneal":
             return SimulatedAnnealingSampler(), info, {}
         elif solver == "tabu":
             return TabuSampler(), info, {}
