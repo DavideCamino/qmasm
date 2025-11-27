@@ -11,7 +11,7 @@ import sys
 from collections import defaultdict
 from dwave import inspector
 from dwave.embedding import unembed_sampleset, chain_breaks, chain_break_frequency
-from scipy.stats import median_absolute_deviation
+from scipy.stats import median_abs_deviation
 
 # Define a class to represent a single solution.
 class Solution:
@@ -398,7 +398,7 @@ class Solutions(object):
         raw_min = np.amin(raw_energies)
         raw_mean = np.mean(raw_energies)
         raw_median = np.median(raw_energies)
-        raw_mad = median_absolute_deviation(raw_energies)
+        raw_mad = median_abs_deviation(raw_energies)
         raw_stddev = np.std(raw_energies)
         raw_max = np.amax(raw_energies)
 
@@ -417,7 +417,7 @@ class Solutions(object):
             filtered_min = np.amin(filtered_energies)
             filtered_mean = np.mean(filtered_energies)
             filtered_median = np.median(filtered_energies)
-            filtered_mad = median_absolute_deviation(filtered_energies)
+            filtered_mad = median_abs_deviation(filtered_energies)
             filtered_stddev = np.std(filtered_energies)
             filtered_max = np.amax(filtered_energies)
 
