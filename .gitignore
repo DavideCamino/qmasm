@@ -2,3 +2,4 @@ build/
 dist/
 examples/qmasm-maze
 src/qmasm.egg-info/
+src/qmasm/__pycache__
