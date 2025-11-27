@@ -19,17 +19,19 @@ import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from dimod import ExactSolver, SampleSet
-from dwave.cloud import Client, hybrid, qpu, sw
+#from dwave.cloud import Client, hybrid, qpu, sw
+from dwave.cloud import Client
+import hybrid
 from dwave.cloud.exceptions import SolverFailureError, SolverNotFoundError
 from dwave.embedding import embed_bqm
 from dwave.system import DWaveSampler, EmbeddingComposite, VirtualGraphComposite, LeapHybridSampler
-from dwave_qbsolv import QBSolv
-from greedy import SteepestDescentSolver
+#from dwave_qbsolv import QBSolv
+from dwave.samplers import SteepestDescentSolver
 from hybrid.reference.kerberos import KerberosSampler
-from neal import SimulatedAnnealingSampler
+from dwave.samplers import SimulatedAnnealingSampler
 from qmasm.solutions import Solutions
 from qmasm.utils import SpecializedPriorityQueue
-from tabu import TabuSampler
+from dwave.samplers import TabuSampler
 
 class EmbeddingCache(object):
     "Read and write an embedding cache file."
