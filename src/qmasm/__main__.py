@@ -13,6 +13,7 @@ from qmasm.parse import FileParser
 from qmasm.problem import Problem
 from qmasm.solve import Sampler
 from qmasm.utils import Utilities, SymbolMapping
+from qmasm.preprocess import Preprocess
 
 class QMASM(ParseCommandLine, Utilities, OutputMixin):
     "QMASM represents everything the program can do."
@@ -37,6 +38,10 @@ class QMASM(ParseCommandLine, Utilities, OutputMixin):
         # Parse the command line.
         cl_args = self.parse_command_line()
         self.report_command_line(cl_args)
+
+        #preprocess
+        preproc = Preprocess()
+        preproc.preprocess(cl_args.input)
 
         # Parse the original input file(s) into an internal representation.
         fparse = FileParser(self)
