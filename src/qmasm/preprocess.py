@@ -13,17 +13,17 @@ class Preprocess:
         old = open(file, 'r').read()
         open(file+".old", 'w').write(old)
         
-        with open(file, 'r') as input:
-            first_row = input.readline()
-            second_row = input.readline()
+        with open(file, 'r') as file_in:
+            first_row = file_in.readline()
+            second_row = file_in.readline()
             while(second_row != ""):
                 if first_row.startswith("#") and second_row.startswith("!begin_macro"):
                     self.name[first_row[2:-1]] = second_row[len("!begin_macro "):-1]
                 first_row = second_row
-                second_row = input.readline()
+                second_row = file_in.readline()
 
-        with open(file, 'r') as input:
-            doc = input.read()
+        with open(file, 'r') as file_in:
+            doc = file_in.read()
             lines = doc.splitlines()
             for line in lines:
                 for word in line.split():
@@ -31,6 +31,6 @@ class Preprocess:
                         line = line.replace(word, self.name[word])
                 self.new_lines.append(line)
 
-        with open(file, 'w') as output:
+        with open(file, 'w') as file_out:
             for line in self.new_lines:
-                output.write(line+"\n")
+                file_out.write(line+"\n")
